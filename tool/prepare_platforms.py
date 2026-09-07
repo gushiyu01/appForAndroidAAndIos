@@ -32,6 +32,29 @@ def use_fragment_activity() -> None:
         activity_path.write_text(source, encoding="utf-8")
 
 
+def disable_built_in_kotlin() -> None:
+    # sensors_plus 7.1 still applies KGP, which is incompatible with
+    # Flutter 3.47's experimental built-in Kotlin Android setup.
+    properties_path = ROOT / "android" / "gradle.properties"
+    properties = properties_path.read_text(encoding="utf-8")
+    required_properties = {
+        "android.builtInKotlin": "false",
+        "android.newDsl": "false",
+    }
+    updates = []
+    for name, value in required_properties.items():
+        prefix = f"{name}="
+        if any(line.startswith(prefix) for line in properties.splitlines()):
+            continue
+        updates.append(f"{prefix}{value}")
+
+    if updates:
+        if properties and not properties.endswith("\n"):
+            properties += "\n"
+        properties += "\n".join(updates) + "\n"
+        properties_path.write_text(properties, encoding="utf-8")
+
+
 def add_ios_usage_descriptions() -> None:
     info_plist_path = ROOT / "ios" / "Runner" / "Info.plist"
     with info_plist_path.open("rb") as file:
@@ -47,6 +70,7 @@ def add_ios_usage_descriptions() -> None:
 def main() -> None:
     add_android_permissions()
     use_fragment_activity()
+    disable_built_in_kotlin()
     add_ios_usage_descriptions()
 
 
