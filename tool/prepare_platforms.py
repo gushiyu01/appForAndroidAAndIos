@@ -132,8 +132,6 @@ import CoreMotion
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
-    private let motionManager = CMMotionManager()
-
     override func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -149,9 +147,8 @@ import CoreMotion
 
     private func registerMotionChannels(with messenger: FlutterBinaryMessenger) {
         let gravityScale = 9.80665
-        motionManager.deviceMotionUpdateInterval = 1.0 / 30.0
 
-        EventChannel(name: "app_for_android_a_and_ios/accelerometer", binaryMessenger: messenger)
+        FlutterEventChannel(name: "app_for_android_a_and_ios/accelerometer", binaryMessenger: messenger)
             .setStreamHandler(MotionStreamHandler { motion in
                 [
                     "x": motion.gravity.x * gravityScale,
@@ -160,7 +157,7 @@ import CoreMotion
                 ]
             })
 
-        EventChannel(name: "app_for_android_a_and_ios/gyroscope", binaryMessenger: messenger)
+        FlutterEventChannel(name: "app_for_android_a_and_ios/gyroscope", binaryMessenger: messenger)
             .setStreamHandler(MotionStreamHandler { motion in
                 [
                     "x": motion.rotationRate.x,
@@ -169,13 +166,12 @@ import CoreMotion
                 ]
             })
 
-        motionManager.startDeviceMotionUpdates(to: .main) { _, _ in }
     }
 }
 
 private final class MotionStreamHandler: NSObject, FlutterStreamHandler {
     private let values: (CMDeviceMotion) -> [String: Double]
-    private var listening = false
+    private let motionManager = CMMotionManager()
 
     init(values: @escaping (CMDeviceMotion) -> [String: Double]) {
         self.values = values
@@ -185,23 +181,17 @@ private final class MotionStreamHandler: NSObject, FlutterStreamHandler {
         withArguments arguments: Any?,
         eventSink events: @escaping FlutterEventSink
     ) -> FlutterError? {
-        listening = true
-
-        if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
-            appDelegate.motionManager.startDeviceMotionUpdates(to: .main) { motion, error in
-                guard error == nil, let motion else { return }
-                events(self.values(motion))
-            }
+        motionManager.deviceMotionUpdateInterval = 1.0 / 30.0
+        motionManager.startDeviceMotionUpdates(to: .main) { motion, error in
+            guard error == nil, let motion else { return }
+            events(self.values(motion))
         }
 
         return nil
     }
 
     func onCancel(withArguments arguments: Any?) -> FlutterError? {
-        if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
-            appDelegate.motionManager.stopDeviceMotionUpdates()
-        }
-        listening = false
+        motionManager.stopDeviceMotionUpdates()
         return nil
     }
 }
