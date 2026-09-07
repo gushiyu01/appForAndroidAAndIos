@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:sensors_plus/sensors_plus.dart';
+
+import '../services/motion_service.dart';
 
 class LevelTestPage extends StatefulWidget {
   const LevelTestPage({super.key});
@@ -16,15 +17,15 @@ class LevelTestPage extends StatefulWidget {
 class _LevelTestPageState extends State<LevelTestPage> {
   static const double _levelThreshold = 1.5;
 
-  AccelerometerEvent? _accelerometerEvent;
-  GyroscopeEvent? _gyroscopeEvent;
+  MotionSample? _accelerometerEvent;
+  MotionSample? _gyroscopeEvent;
   double _pitchOffset = 0;
   double _rollOffset = 0;
   String? _sensorError;
   DateTime _lastUiUpdate = DateTime.fromMillisecondsSinceEpoch(0);
 
-  StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
-  StreamSubscription<GyroscopeEvent>? _gyroscopeSubscription;
+  StreamSubscription<MotionSample>? _accelerometerSubscription;
+  StreamSubscription<MotionSample>? _gyroscopeSubscription;
 
   @override
   void initState() {
@@ -46,12 +47,12 @@ class _LevelTestPageState extends State<LevelTestPage> {
     super.dispose();
   }
 
-  void _handleAccelerometer(AccelerometerEvent event) {
+  void _handleAccelerometer(MotionSample event) {
     _accelerometerEvent = event;
     _refreshUi();
   }
 
-  void _handleGyroscope(GyroscopeEvent event) {
+  void _handleGyroscope(MotionSample event) {
     _gyroscopeEvent = event;
     _refreshUi();
   }
@@ -135,7 +136,7 @@ class _LevelTestPageState extends State<LevelTestPage> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final GyroscopeEvent? gyroscopeEvent = _gyroscopeEvent;
+    final MotionSample? gyroscopeEvent = _gyroscopeEvent;
 
     return Scaffold(
       appBar: AppBar(title: const Text('水平测试')),
