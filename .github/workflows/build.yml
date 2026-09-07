@@ -31,6 +31,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.44.9
           cache: true
 
       - name: Create Flutter platforms
@@ -49,7 +50,7 @@ jobs:
         run: flutter test
 
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --no-pub
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
@@ -69,6 +70,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.44.9
           cache: true
 
       - name: Create Flutter platforms
@@ -87,7 +89,7 @@ jobs:
         run: flutter test
 
       - name: Build unsigned iOS app
-        run: flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign --no-pub
 
       - name: Package iOS app
         run: ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app Runner-ios-unsigned.zip
