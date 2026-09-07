@@ -1,0 +1,22 @@
+name: app_for_android_a_and_ios
+description: A Flutter app protected by system biometric authentication.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.8.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^1.1.2
+  local_auth: ^2.3.0
+  sensors_plus: ^6.1.1
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
