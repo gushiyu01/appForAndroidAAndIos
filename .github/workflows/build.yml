@@ -13,6 +13,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FLUTTER_VERSION: "3.44.9"
+
 jobs:
   android:
     name: Android APK
@@ -31,7 +34,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.44.9
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Create Flutter platforms
@@ -39,6 +42,9 @@ jobs:
 
       - name: Prepare native platform settings
         run: python tool/prepare_platforms.py
+
+      - name: Validate platform templates
+        run: python tool/validate_templates.py
 
       - name: Install dependencies
         run: flutter pub get
@@ -59,6 +65,19 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
+      - name: Upload Android diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-diagnostics
+          path: |
+            android/app/build.gradle.kts
+            android/gradle.properties
+            android/app/src/main/AndroidManifest.xml
+            android/app/src/main/kotlin/**/MainActivity.kt
+            build/app/reports/
+          if-no-files-found: ignore
+
   ios:
     name: iOS build
     runs-on: macos-latest
@@ -70,7 +89,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.44.9
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Create Flutter platforms
@@ -78,6 +97,9 @@ jobs:
 
       - name: Prepare native platform settings
         run: python3 tool/prepare_platforms.py
+
+      - name: Validate platform templates
+        run: python3 tool/validate_templates.py
 
       - name: Install dependencies
         run: flutter pub get
@@ -100,3 +122,13 @@ jobs:
           name: runner-ios-unsigned
           path: Runner-ios-unsigned.zip
           if-no-files-found: error
+
+      - name: Upload iOS diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-diagnostics
+          path: |
+            ios/Runner/AppDelegate.swift
+            ios/Runner/Info.plist
+          if-no-files-found: ignore
