@@ -68,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       if (didAuthenticate) {
-        Navigator.of(context).pushReplacementNamed(HomePage.routeName);
+        await Navigator.of(context).pushReplacementNamed(HomePage.routeName);
         return;
       }
 
