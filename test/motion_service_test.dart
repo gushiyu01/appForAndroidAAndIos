@@ -18,7 +18,6 @@ void main() {
   test('rejects invalid native motion events', () {
     expect(
       () => MotionSample.fromEvent(<String>[]),
-      ),
       throwsFormatException,
     );
   });
