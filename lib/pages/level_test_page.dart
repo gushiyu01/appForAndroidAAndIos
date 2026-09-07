@@ -79,7 +79,7 @@ class _LevelTestPageState extends State<LevelTestPage> {
   }
 
   double get _rawPitch {
-    final AccelerometerEvent? event = _accelerometerEvent;
+    final MotionSample? event = _accelerometerEvent;
     if (event == null) {
       return 0;
     }
@@ -93,7 +93,7 @@ class _LevelTestPageState extends State<LevelTestPage> {
   }
 
   double get _rawRoll {
-    final AccelerometerEvent? event = _accelerometerEvent;
+    final MotionSample? event = _accelerometerEvent;
     if (event == null) {
       return 0;
     }
