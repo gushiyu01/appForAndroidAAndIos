@@ -253,7 +253,7 @@ class _MazeGamePageState extends State<MazeGamePage>
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final String status = _completed
-        ? '抵达出口！用时 ' + _formatDuration(_elapsed)
+        ? '抵达出口！用时 ${_formatDuration(_elapsed)}'
         : _paused
             ? '游戏已暂停'
             : _manualControl
@@ -452,7 +452,7 @@ class _TimerCard extends StatelessWidget {
   String _formatDuration(Duration duration) {
     final int minutes = duration.inMinutes;
     final int seconds = duration.inSeconds % 60;
-    return minutes.toString().padLeft(2, '0') + ':' + seconds.toString().padLeft(2, '0');
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }
 
@@ -514,10 +514,10 @@ class _SettingsCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Switch(value: manualControl, onChanged: onControlModeChanged, activeColor: Colors.white, activeTrackColor: const Color(0xFF575171), inactiveThumbColor: const Color(0xFFF8F8FC), inactiveTrackColor: const Color(0xFF9999A1)),
+              Switch(value: manualControl, onChanged: onControlModeChanged, activeThumbColor: Colors.white, activeTrackColor: const Color(0xFF575171), inactiveThumbColor: const Color(0xFFF8F8FC), inactiveTrackColor: const Color(0xFF9999A1)),
             ],
           ),
-          Align(alignment: Alignment.centerRight, child: Text('当前速度：' + speedLabel, style: const TextStyle(color: Color(0xFF625B78), fontSize: 12, fontWeight: FontWeight.w700))),
+          Align(alignment: Alignment.centerRight, child: Text('当前速度：$speedLabel', style: const TextStyle(color: Color(0xFF625B78), fontSize: 12, fontWeight: FontWeight.w700))),
         ],
       ),
     );
@@ -621,13 +621,13 @@ class _MazePainter extends CustomPainter {
     final RRect outer = RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(18));
     canvas.save();
     canvas.clipRRect(outer);
-    final Paint boardBackground = Paint()..shader = const ui.LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: <Color>[Color(0xFFFDFCF9), Color(0xFFEDEBEA)]).createShader(Offset.zero & size);
+    final Paint boardBackground = Paint()..shader = const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: <Color>[Color(0xFFFDFCF9), Color(0xFFEDEBEA)]).createShader(Offset.zero & size);
     canvas.drawRRect(outer, boardBackground);
     final RRect inner = RRect.fromRectAndRadius(Rect.fromLTRB(11, 11, size.width - 11, size.height - 11), const Radius.circular(10));
-    final Paint wood = Paint()..shader = const ui.LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: <Color>[Color(0xFFB98455), Color(0xFFE2B27C), Color(0xFF8B5B3A)], stops: <double>[0, 0.45, 1]).createShader(inner.outerRect);
+    final Paint wood = Paint()..shader = const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: <Color>[Color(0xFFB98455), Color(0xFFE2B27C), Color(0xFF8B5B3A)], stops: <double>[0, 0.45, 1]).createShader(inner.outerRect);
     canvas.drawRRect(inner, wood);
     final RRect playfield = RRect.fromRectAndRadius(Rect.fromLTRB(24, 24, size.width - 24, size.height - 24), const Radius.circular(5));
-    final Paint field = Paint()..shader = const ui.LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: <Color>[Color(0xFFF8F7F5), Color(0xFFE9E7E6)]).createShader(playfield.outerRect);
+    final Paint field = Paint()..shader = const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: <Color>[Color(0xFFF8F7F5), Color(0xFFE9E7E6)]).createShader(playfield.outerRect);
     canvas.drawRRect(playfield, field);
     canvas.restore();
 
@@ -672,7 +672,7 @@ class _MazePainter extends CustomPainter {
   }
 
   void _drawGlow(Canvas canvas, Offset center, Color color) {
-    final Paint glow = Paint()..shader = ui.RadialGradient(colors: <Color>[color.withValues(alpha: 0.72), color.withValues(alpha: 0)]).createShader(Rect.fromCircle(center: center, radius: 32));
+    final Paint glow = Paint()..shader = RadialGradient(colors: <Color>[color.withValues(alpha: 0.72), color.withValues(alpha: 0)]).createShader(Rect.fromCircle(center: center, radius: 32));
     canvas.drawCircle(center, 32, glow);
   }
 
@@ -686,7 +686,7 @@ class _MazePainter extends CustomPainter {
 
   void _drawBall(Canvas canvas, Offset center, double radius) {
     canvas.drawCircle(center + const Offset(2, 4), radius * 1.06, Paint()..color = const Color(0x55201928));
-    final Paint ball = Paint()..shader = ui.RadialGradient(center: const Alignment(-0.4, -0.5), radius: 0.95, colors: const <Color>[Color(0xFFE6F2FF), Color(0xFF5E77A2), Color(0xFF12192C)], stops: <double>[0, 0.28, 1]).createShader(Rect.fromCircle(center: center, radius: radius));
+    final Paint ball = Paint()..shader = RadialGradient(center: const Alignment(-0.4, -0.5), radius: 0.95, colors: const <Color>[Color(0xFFE6F2FF), Color(0xFF5E77A2), Color(0xFF12192C)], stops: <double>[0, 0.28, 1]).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, ball);
     canvas.drawCircle(center + Offset(-radius * 0.3, -radius * 0.35), radius * 0.17, Paint()..color = const Color(0xCCFFFFFF));
   }
@@ -694,3 +694,4 @@ class _MazePainter extends CustomPainter {
   @override
   bool shouldRepaint(_MazePainter oldDelegate) => oldDelegate.maze != maze || oldDelegate.ball != ball || oldDelegate.manualControl != manualControl || oldDelegate.manualDirection != manualDirection;
 }
+
