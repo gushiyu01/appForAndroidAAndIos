@@ -686,7 +686,7 @@ class _MazePainter extends CustomPainter {
 
   void _drawBall(Canvas canvas, Offset center, double radius) {
     canvas.drawCircle(center + const Offset(2, 4), radius * 1.06, Paint()..color = const Color(0x55201928));
-    final Paint ball = Paint()..shader = RadialGradient(center: const Alignment(-0.4, -0.5), radius: 0.95, colors: const <Color>[Color(0xFFE6F2FF), Color(0xFF5E77A2), Color(0xFF12192C)], stops: <double>[0, 0.28, 1]).createShader(Rect.fromCircle(center: center, radius: radius));
+    final Paint ball = Paint()..shader = const RadialGradient(center: Alignment(-0.4, -0.5), radius: 0.95, colors: <Color>[Color(0xFFE6F2FF), Color(0xFF5E77A2), Color(0xFF12192C)], stops: <double>[0, 0.28, 1]).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, ball);
     canvas.drawCircle(center + Offset(-radius * 0.3, -radius * 0.35), radius * 0.17, Paint()..color = const Color(0xCCFFFFFF));
   }
