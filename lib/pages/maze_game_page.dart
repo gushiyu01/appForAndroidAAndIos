@@ -20,8 +20,11 @@ class MazeGamePage extends StatefulWidget {
 class _MazeGamePageState extends State<MazeGamePage>
     with SingleTickerProviderStateMixin {
   static const double _ballRadius = 0.18;
-  static const double _gravityScale = 6.5;
-  static const double _maxSpeed = 4.2;
+  static const double _normalGravityScale = 8.0;
+  static const double _fastGravityScale = 14.0;
+  static const double _normalMaxSpeed = 5.5;
+  static const double _fastMaxSpeed = 9.0;
+  static const double _frictionPerFrame = 0.94;
 
   Maze _maze = Maze.generate();
   Offset _ball = const Offset(0.5, 0.5);
@@ -32,6 +35,7 @@ class _MazeGamePageState extends State<MazeGamePage>
   String? _sensorError;
   bool _completed = false;
   bool _paused = false;
+  bool _highSpeed = true;
   Duration _lastTick = Duration.zero;
 
   late final Ticker _ticker;
@@ -107,13 +111,16 @@ class _MazeGamePageState extends State<MazeGamePage>
   }
 
   void _moveBall(double seconds) {
-    final Offset acceleration = _gravity * _gravityScale;
+    final double gravityScale =
+        _highSpeed ? _fastGravityScale : _normalGravityScale;
+    final double maxSpeed = _highSpeed ? _fastMaxSpeed : _normalMaxSpeed;
+    final Offset acceleration = _gravity * gravityScale;
     Offset velocity = _velocity + acceleration * seconds;
     final double speed = velocity.distance;
-    if (speed > _maxSpeed) {
-      velocity = velocity / speed * _maxSpeed;
+    if (speed > maxSpeed) {
+      velocity = velocity / speed * maxSpeed;
     }
-    velocity *= math.pow(0.82, seconds * 60).toDouble();
+    velocity *= math.pow(_frictionPerFrame, seconds * 60).toDouble();
 
     double x = _ball.dx + velocity.dx * seconds;
     double y = _ball.dy + velocity.dy * seconds;
@@ -233,6 +240,26 @@ class _MazeGamePageState extends State<MazeGamePage>
                     label: Text(_completed ? '再来一局' : _paused ? '继续' : '暂停'),
                   ),
                 ],
+              ),
+              Card(
+                margin: EdgeInsets.zero,
+                child: SwitchListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  secondary: Icon(
+                    Icons.speed,
+                    color: _highSpeed
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  title: const Text('高速模式'),
+                  subtitle: Text(_highSpeed ? '小球移动速度更快' : '普通速度，更容易控制'),
+                  value: _highSpeed,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _highSpeed = value;
+                    });
+                  },
+                ),
               ),
               if (_sensorError != null)
                 Padding(
