@@ -17,13 +17,17 @@ class MazeGamePage extends StatefulWidget {
   State<MazeGamePage> createState() => _MazeGamePageState();
 }
 
+enum _SpeedLevel { normal, fast, turbo }
+
 class _MazeGamePageState extends State<MazeGamePage>
     with SingleTickerProviderStateMixin {
   static const double _ballRadius = 0.18;
   static const double _normalGravityScale = 8.0;
   static const double _fastGravityScale = 14.0;
+  static const double _turboGravityScale = 22.0;
   static const double _normalMaxSpeed = 5.5;
   static const double _fastMaxSpeed = 9.0;
+  static const double _turboMaxSpeed = 14.0;
   static const double _frictionPerFrame = 0.94;
 
   Maze _maze = Maze.generate();
@@ -35,7 +39,8 @@ class _MazeGamePageState extends State<MazeGamePage>
   String? _sensorError;
   bool _completed = false;
   bool _paused = false;
-  bool _highSpeed = true;
+  _SpeedLevel _speedLevel = _SpeedLevel.fast;
+  bool _manualControl = false;
   Duration _lastTick = Duration.zero;
 
   late final Ticker _ticker;
@@ -60,7 +65,7 @@ class _MazeGamePageState extends State<MazeGamePage>
   }
 
   void _handleAccelerometer(MotionSample event) {
-    if (!mounted) {
+    if (!mounted || _manualControl) {
       return;
     }
 
@@ -111,9 +116,16 @@ class _MazeGamePageState extends State<MazeGamePage>
   }
 
   void _moveBall(double seconds) {
-    final double gravityScale =
-        _highSpeed ? _fastGravityScale : _normalGravityScale;
-    final double maxSpeed = _highSpeed ? _fastMaxSpeed : _normalMaxSpeed;
+    final double gravityScale = switch (_speedLevel) {
+      _SpeedLevel.normal => _normalGravityScale,
+      _SpeedLevel.fast => _fastGravityScale,
+      _SpeedLevel.turbo => _turboGravityScale,
+    };
+    final double maxSpeed = switch (_speedLevel) {
+      _SpeedLevel.normal => _normalMaxSpeed,
+      _SpeedLevel.fast => _fastMaxSpeed,
+      _SpeedLevel.turbo => _turboMaxSpeed,
+    };
     final Offset acceleration = _gravity * gravityScale;
     Offset velocity = _velocity + acceleration * seconds;
     final double speed = velocity.distance;
@@ -187,6 +199,50 @@ class _MazeGamePageState extends State<MazeGamePage>
     });
   }
 
+  void _setManualDirection(Offset localPosition, Size boardSize) {
+    if (!_manualControl || _paused || _completed) {
+      return;
+    }
+
+    final Offset center = Offset(boardSize.width / 2, boardSize.height / 2);
+    final Offset distance = localPosition - center;
+    final Offset normalized = Offset(
+      distance.dx / (boardSize.width / 2),
+      distance.dy / (boardSize.height / 2),
+    );
+    setState(() {
+      _gravity = normalized.distance > 1
+          ? normalized / normalized.distance
+          : normalized;
+    });
+  }
+
+  void _stopManualDirection() {
+    if (!_manualControl) {
+      return;
+    }
+    setState(() {
+      _gravity = Offset.zero;
+      _velocity = Offset.zero;
+    });
+  }
+
+  void _setControlMode(bool manual) {
+    setState(() {
+      _manualControl = manual;
+      _gravity = Offset.zero;
+      _velocity = Offset.zero;
+    });
+  }
+
+  String _speedLabel(_SpeedLevel level) {
+    return switch (level) {
+      _SpeedLevel.normal => '普通',
+      _SpeedLevel.fast => '高速',
+      _SpeedLevel.turbo => '极速',
+    };
+  }
+
   String _formatDuration(Duration duration) {
     final int minutes = duration.inMinutes;
     final int seconds = duration.inSeconds % 60;
@@ -200,7 +256,9 @@ class _MazeGamePageState extends State<MazeGamePage>
         ? '抵达出口！用时 ${_formatDuration(_elapsed)}'
         : _paused
             ? '游戏已暂停'
-            : '倾斜手机，让小球从左上角走到右下角';
+            : _manualControl
+                ? '拖动迷宫中的方向盘，让小球从左上角走到右下角'
+                : '倾斜手机，让小球从左上角走到右下角';
 
     return Scaffold(
       appBar: AppBar(
@@ -243,22 +301,69 @@ class _MazeGamePageState extends State<MazeGamePage>
               ),
               Card(
                 margin: EdgeInsets.zero,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.speed, color: colorScheme.primary),
+                          const SizedBox(width: 12),
+                          const Text('移动速度'),
+                          const Spacer(),
+                          Text(
+                            _speedLabel(_speedLevel),
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      SegmentedButton<_SpeedLevel>(
+                        segments: const [
+                          ButtonSegment(
+                            value: _SpeedLevel.normal,
+                            label: Text('普通'),
+                          ),
+                          ButtonSegment(
+                            value: _SpeedLevel.fast,
+                            label: Text('高速'),
+                          ),
+                          ButtonSegment(
+                            value: _SpeedLevel.turbo,
+                            label: Text('极速'),
+                          ),
+                        ],
+                        selected: <_SpeedLevel>{_speedLevel},
+                        onSelectionChanged: (Set<_SpeedLevel> selection) {
+                          setState(() {
+                            _speedLevel = selection.first;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Card(
+                margin: const EdgeInsets.only(top: 10),
                 child: SwitchListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                   secondary: Icon(
-                    Icons.speed,
-                    color: _highSpeed
+                    _manualControl ? Icons.touch_app : Icons.screen_rotation,
+                    color: _manualControl
                         ? colorScheme.primary
                         : colorScheme.onSurfaceVariant,
                   ),
-                  title: const Text('高速模式'),
-                  subtitle: Text(_highSpeed ? '小球移动速度更快' : '普通速度，更容易控制'),
-                  value: _highSpeed,
-                  onChanged: (bool value) {
-                    setState(() {
-                      _highSpeed = value;
-                    });
-                  },
+                  title: const Text('手动控制'),
+                  subtitle: Text(
+                    _manualControl ? '按住迷宫并拖动来控制方向' : '倾斜手机来控制小球',
+                  ),
+                  value: _manualControl,
+                  onChanged: _setControlMode,
                 ),
               ),
               if (_sensorError != null)
@@ -274,12 +379,35 @@ class _MazeGamePageState extends State<MazeGamePage>
                 child: Center(
                   child: AspectRatio(
                     aspectRatio: _maze.columns / _maze.rows,
-                    child: CustomPaint(
-                      painter: _MazePainter(
-                        maze: _maze,
-                        ball: _ball,
-                        colorScheme: colorScheme,
-                      ),
+                    child: LayoutBuilder(
+                      builder: (BuildContext context, BoxConstraints constraints) {
+                        final Size boardSize = constraints.biggest;
+                        return GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onPanStart: _manualControl
+                              ? (DragStartDetails details) =>
+                                  _setManualDirection(details.localPosition, boardSize)
+                              : null,
+                          onPanUpdate: _manualControl
+                              ? (DragUpdateDetails details) =>
+                                  _setManualDirection(details.localPosition, boardSize)
+                              : null,
+                          onPanEnd: _manualControl
+                              ? (_) => _stopManualDirection()
+                              : null,
+                          onPanCancel:
+                              _manualControl ? _stopManualDirection : null,
+                          child: CustomPaint(
+                            painter: _MazePainter(
+                              maze: _maze,
+                              ball: _ball,
+                              colorScheme: colorScheme,
+                              manualControl: _manualControl,
+                              manualDirection: _gravity,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -297,7 +425,7 @@ class _MazeGamePageState extends State<MazeGamePage>
               ),
               const SizedBox(height: 8),
               Text(
-                '入口：左上角  ·  出口：右下角  ·  每次重新开始都会生成随机路线',
+                '${_manualControl ? '手动模式：按住迷宫并拖动控制方向' : '重力模式：倾斜手机控制方向'}  ·  入口左上  ·  出口右下',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
@@ -316,11 +444,15 @@ class _MazePainter extends CustomPainter {
     required this.maze,
     required this.ball,
     required this.colorScheme,
+    required this.manualControl,
+    required this.manualDirection,
   });
 
   final Maze maze;
   final Offset ball;
   final ColorScheme colorScheme;
+  final bool manualControl;
+  final Offset manualDirection;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -405,6 +537,26 @@ class _MazePainter extends CustomPainter {
       ),
     );
 
+    if (manualControl) {
+      final Offset center = Offset(size.width / 2, size.height / 2);
+      final Paint joystickPaint = Paint()
+        ..color = colorScheme.primary.withValues(alpha: 0.16)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(center, math.min(size.width, size.height) * 0.22, joystickPaint);
+      final Paint directionPaint = Paint()
+        ..color = colorScheme.primary.withValues(alpha: 0.45)
+        ..strokeWidth = 2
+        ..style = PaintingStyle.stroke;
+      canvas.drawLine(
+        center,
+        center + Offset(
+          manualDirection.dx * size.width * 0.18,
+          manualDirection.dy * size.height * 0.18,
+        ),
+        directionPaint,
+      );
+    }
+
     final Paint ballPaint = Paint()..color = colorScheme.primary;
     canvas.drawCircle(
       Offset(ball.dx * cellWidth, ball.dy * cellHeight),
@@ -415,6 +567,9 @@ class _MazePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_MazePainter oldDelegate) {
-    return oldDelegate.maze != maze || oldDelegate.ball != ball;
+    return oldDelegate.maze != maze ||
+        oldDelegate.ball != ball ||
+        oldDelegate.manualControl != manualControl ||
+        oldDelegate.manualDirection != manualDirection;
   }
 }
