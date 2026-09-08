@@ -4,6 +4,7 @@ import 'pages/camera_page.dart';
 import 'pages/home_page.dart';
 import 'pages/level_test_page.dart';
 import 'pages/login_page.dart';
+import 'pages/maze_game_page.dart';
 
 void main() {
   runApp(const AppForAndroidAAndIosApp());
@@ -26,6 +27,7 @@ class AppForAndroidAAndIosApp extends StatelessWidget {
         LoginPage.routeName: (_) => const LoginPage(),
         HomePage.routeName: (_) => const HomePage(),
         LevelTestPage.routeName: (_) => const LevelTestPage(),
+        MazeGamePage.routeName: (_) => const MazeGamePage(),
         CameraPage.routeName: (_) => const CameraPage(),
       },
     );

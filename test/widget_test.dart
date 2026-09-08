@@ -21,5 +21,6 @@ void main() {
 
     expect(find.text('水平测试'), findsOneWidget);
     expect(find.text('打开相机'), findsOneWidget);
+    expect(find.text('重力迷宫'), findsOneWidget);
   });
 }
