@@ -9,7 +9,7 @@
 本项目完全使用 GitHub Actions 在云端构建，本地无需安装 Flutter、Android SDK 或 Xcode。
 
 > [!IMPORTANT]
-> 本项目默认使用 GitHub Actions 手动构建。进入 **Actions > Build Android and iOS > Run workflow**，选择目标分支后点击 **Run workflow**。构建完成后，在 Workflow 页面的 **Artifacts** 区域下载产物。
+> 本项目会在推送到 `main`、提交针对 `main` 的 Pull Request 时自动构建，也支持在 **Actions > Build Android and iOS > Run workflow** 中手动构建。构建完成后，在 Workflow 页面的 **Artifacts** 区域下载产物。
 
 [打开 GitHub Actions 构建页面](https://github.com/gushiyu01/appForAndroidAAndIos/actions/workflows/build.yml)
 
@@ -19,14 +19,7 @@ Fork 仓库后，进入 **Actions > Build Android and iOS > Run workflow**，在
 
 ### 切换手动构建与自动构建
 
-当前 `.github/workflows/build.yml` 使用手动触发：
-
-```yaml
-on:
-  workflow_dispatch:
-```
-
-如果要恢复推送到 `main`、提交 PR 时自动构建，把触发条件改为：
+当前 `.github/workflows/build.yml` 已配置为推送到 `main`、提交针对 `main` 的 Pull Request 时自动构建，同时保留手动触发：
 
 ```yaml
 on:
