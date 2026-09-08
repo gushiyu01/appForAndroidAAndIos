@@ -9,7 +9,7 @@
 本项目完全使用 GitHub Actions 在云端构建，本地无需安装 Flutter、Android SDK 或 Xcode。
 
 > [!IMPORTANT]
-> 本项目会在推送到 `main`、提交针对 `main` 的 Pull Request 时自动构建，也支持在 **Actions > Build Android and iOS > Run workflow** 中手动构建。构建完成后，在 Workflow 页面的 **Artifacts** 区域下载产物。
+> 本项目会在推送到 `codex/gravity-maze-game`、提交针对 `codex/gravity-maze-game` 的 Pull Request 时自动构建，也支持在 **Actions > Build Android and iOS > Run workflow** 中手动构建。构建完成后，在 Workflow 页面的 **Artifacts** 区域下载产物。
 
 [打开 GitHub Actions 构建页面](https://github.com/gushiyu01/appForAndroidAAndIos/actions/workflows/build.yml)
 
@@ -19,16 +19,16 @@ Fork 仓库后，进入 **Actions > Build Android and iOS > Run workflow**，在
 
 ### 切换手动构建与自动构建
 
-当前 `.github/workflows/build.yml` 已配置为推送到 `main`、提交针对 `main` 的 Pull Request 时自动构建，同时保留手动触发：
+当前 `.github/workflows/build.yml` 已配置为推送到 `codex/gravity-maze-game`、提交针对 `codex/gravity-maze-game` 的 Pull Request 时自动构建，同时保留手动触发：
 
 ```yaml
 on:
   push:
     branches:
-      - main
+      - codex/gravity-maze-game
   pull_request:
     branches:
-      - main
+      - codex/gravity-maze-game
   workflow_dispatch:
 ```
 
@@ -57,7 +57,7 @@ on:
 
 ## 云端构建流程
 
-推送到 `main`、提交 Pull Request 或手动触发 Workflow 后，GitHub Actions 会执行以下任务：
+推送到 `codex/gravity-maze-game`、提交 Pull Request 或手动触发 Workflow 后，GitHub Actions 会执行以下任务：
 
 1. 在云端安装 Flutter 3.44.9。
 2. 生成 Android 和 iOS 平台工程。

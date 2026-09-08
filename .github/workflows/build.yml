@@ -3,10 +3,10 @@ name: Build Android and iOS
 on:
   push:
     branches:
-      - main
+      - codex/gravity-maze-game
   pull_request:
     branches:
-      - main
+      - codex/gravity-maze-game
   workflow_dispatch:
 
 concurrency:
