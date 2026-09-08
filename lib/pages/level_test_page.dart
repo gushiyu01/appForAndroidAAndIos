@@ -78,6 +78,9 @@ class _LevelTestPageState extends State<LevelTestPage> {
     }
   }
 
+  // Native motion values use the phone's axes: X is right/left and Y is
+  // top/bottom. Keep those axes intact so the ball follows the phone instead
+  // of swapping horizontal and vertical movement.
   double get _rawPitch {
     final MotionSample? event = _accelerometerEvent;
     if (event == null) {
@@ -86,8 +89,8 @@ class _LevelTestPageState extends State<LevelTestPage> {
 
     return _toDegrees(
       math.atan2(
-        event.x,
-        math.sqrt(event.y * event.y + event.z * event.z),
+        event.y,
+        math.sqrt(event.x * event.x + event.z * event.z),
       ),
     );
   }
@@ -100,8 +103,8 @@ class _LevelTestPageState extends State<LevelTestPage> {
 
     return _toDegrees(
       math.atan2(
-        event.y,
-        math.sqrt(event.x * event.x + event.z * event.z),
+        event.x,
+        math.sqrt(event.y * event.y + event.z * event.z),
       ),
     );
   }
@@ -228,10 +231,12 @@ class _LevelBoard extends StatelessWidget {
         final double boardSize = constraints.maxWidth;
         final double maxTravel = boardSize * 0.36;
         final double offset = boardSize * 0.5 - 24;
+        // X grows to the right on the phone. Y grows toward the phone's top,
+        // while Flutter's screen coordinates grow downward, hence the minus.
         final double ballX =
             (roll / 30 * maxTravel).clamp(-maxTravel, maxTravel);
         final double ballY =
-            (pitch / 30 * maxTravel).clamp(-maxTravel, maxTravel);
+            (-pitch / 30 * maxTravel).clamp(-maxTravel, maxTravel);
         final Color ballColor =
             isLevel ? const Color(0xFF16A34A) : colorScheme.primary;
 
