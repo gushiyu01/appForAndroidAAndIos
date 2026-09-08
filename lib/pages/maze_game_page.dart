@@ -694,4 +694,3 @@ class _MazePainter extends CustomPainter {
   @override
   bool shouldRepaint(_MazePainter oldDelegate) => oldDelegate.maze != maze || oldDelegate.ball != ball || oldDelegate.manualControl != manualControl || oldDelegate.manualDirection != manualDirection;
 }
-
