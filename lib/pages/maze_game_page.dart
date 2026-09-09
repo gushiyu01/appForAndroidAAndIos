@@ -335,14 +335,6 @@ class _MazeGamePageState extends State<MazeGamePage>
                               Text(_sensorError!, textAlign: TextAlign.center, style: textTheme.bodySmall?.copyWith(color: const Color(0xFFB33A53), fontWeight: FontWeight.w600)),
                             ],
                             const SizedBox(height: 22),
-                            Text(
-                              _manualControl ? '触控屏幕，让小球从左上角走到右下角' : '倾斜手机，让小球从左上角走到右下角',
-                              textAlign: TextAlign.center,
-                              style: textTheme.titleMedium?.copyWith(color: const Color(0xFF211E2B), fontWeight: FontWeight.w800, letterSpacing: 0.3),
-                            ),
-                            const SizedBox(height: 10),
-                            _InstructionPill(text: _manualControl ? '手动模式  ·  拖动控制方向  ·  入口左上  ·  出口右下' : '重力模式  ·  倾斜手机控制方向  ·  入口左上  ·  出口右下'),
-                            const SizedBox(height: 10),
                             Text(status, textAlign: TextAlign.center, style: textTheme.bodySmall?.copyWith(color: _completed ? const Color(0xFF51419A) : const Color(0xFF777486), fontWeight: FontWeight.w700)),
                           ],
                         ),
@@ -596,6 +588,24 @@ class _SettingsDialog extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    selectedManual
+                        ? '触控屏幕，让小球从左上角走到右下角'
+                        : '倾斜手机，让小球从左上角走到右下角',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xFF211E2B),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _InstructionPill(
+                    text: selectedManual
+                        ? '手动模式 · 拖动控制方向 · 入口左上 · 出口右下'
+                        : '重力模式 · 倾斜手机控制方向 · 入口左上 · 出口右下',
                   ),
                   const SizedBox(height: 18),
                   const Text(
