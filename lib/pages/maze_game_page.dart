@@ -233,15 +233,6 @@ class _MazeGamePageState extends State<MazeGamePage>
     });
   }
 
-  void _setControlMode(bool manual) {
-    setState(() {
-      _manualControl = manual;
-      _gravity = Offset.zero;
-      _velocity = Offset.zero;
-      _sensorError = null;
-    });
-  }
-
   Future<void> _showSettingsDialog({required bool initial}) async {
     await showDialog<void>(
       context: context,
@@ -269,14 +260,6 @@ class _MazeGamePageState extends State<MazeGamePage>
         );
       },
     );
-  }
-
-  String _speedLabel(_SpeedLevel level) {
-    return switch (level) {
-      _SpeedLevel.normal => '普通',
-      _SpeedLevel.fast => '高速',
-      _SpeedLevel.turbo => '极速',
-    };
   }
 
   String _formatDuration(Duration duration) {
