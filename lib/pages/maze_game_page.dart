@@ -835,7 +835,7 @@ class _MazePainter extends CustomPainter {
     _drawGlow(canvas, exitRect.center, const Color(0xFFE16FEA));
 
     final double stroke = math.max(6, math.min(cellWidth, cellHeight) * 0.11);
-    final Paint wall = Paint()..color = const Color(0xFFF9F7FF)..strokeWidth = stroke..strokeCap = StrokeCap.square..style = PaintingStyle.stroke;
+    final Paint wall = Paint()..color = const Color(0xFF6686C5)..strokeWidth = stroke..strokeCap = StrokeCap.square..style = PaintingStyle.stroke;
     for (int row = 0; row < maze.rows; row++) {
       for (int column = 0; column < maze.columns; column++) {
         final double left = origin.dx + column * cellWidth;
