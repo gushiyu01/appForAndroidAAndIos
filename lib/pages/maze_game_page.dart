@@ -41,6 +41,7 @@ class _MazeGamePageState extends State<MazeGamePage>
   bool _paused = false;
   _SpeedLevel _speedLevel = _SpeedLevel.fast;
   bool _manualControl = false;
+  bool _gameStarted = false;
   Duration _lastTick = Duration.zero;
 
   late final Ticker _ticker;
@@ -55,6 +56,11 @@ class _MazeGamePageState extends State<MazeGamePage>
       _handleAccelerometer,
       onError: _handleSensorError,
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_showSettingsDialog(initial: true));
+      }
+    });
   }
 
   @override
@@ -103,7 +109,7 @@ class _MazeGamePageState extends State<MazeGamePage>
             .clamp(0.0, 0.05).toDouble();
     _lastTick = elapsed;
 
-    if (_paused || _completed || seconds <= 0) {
+    if (!_gameStarted || _paused || _completed || seconds <= 0) {
       return;
     }
 
@@ -232,7 +238,37 @@ class _MazeGamePageState extends State<MazeGamePage>
       _manualControl = manual;
       _gravity = Offset.zero;
       _velocity = Offset.zero;
+      _sensorError = null;
     });
+  }
+
+  Future<void> _showSettingsDialog({required bool initial}) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: !initial,
+      builder: (BuildContext dialogContext) {
+        return _SettingsDialog(
+          initial: initial,
+          speedLevel: _speedLevel,
+          manualControl: _manualControl,
+          onApply: (_SpeedLevel speedLevel, bool manualControl) {
+            setState(() {
+              _speedLevel = speedLevel;
+              _manualControl = manualControl;
+              _gravity = Offset.zero;
+              _velocity = Offset.zero;
+              _sensorError = null;
+              if (initial) {
+                _gameStarted = true;
+                _startedAt = DateTime.now();
+                _elapsed = Duration.zero;
+              }
+            });
+            Navigator.of(dialogContext).pop();
+          },
+        );
+      },
+    );
   }
 
   String _speedLabel(_SpeedLevel level) {
@@ -285,7 +321,13 @@ class _MazeGamePageState extends State<MazeGamePage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _Header(onBack: () => Navigator.of(context).maybePop(), onRestart: _restart),
+                            _Header(
+                              onBack: () => Navigator.of(context).maybePop(),
+                              onRestart: _restart,
+                              onSettings: () => unawaited(
+                                _showSettingsDialog(initial: false),
+                              ),
+                            ),
                             const SizedBox(height: 18),
                             _BoardCard(
                               maze: _maze,
@@ -305,13 +347,6 @@ class _MazeGamePageState extends State<MazeGamePage>
                               onTogglePause: _completed ? _restart : _togglePause,
                             ),
                             const SizedBox(height: 18),
-                            _SettingsCard(
-                              speedLevel: _speedLevel,
-                              manualControl: _manualControl,
-                              speedLabel: _speedLabel(_speedLevel),
-                              onSpeedChanged: (value) => setState(() => _speedLevel = value),
-                              onControlModeChanged: _setControlMode,
-                            ),
                             if (_sensorError != null) ...[
                               const SizedBox(height: 10),
                               Text(_sensorError!, textAlign: TextAlign.center, style: textTheme.bodySmall?.copyWith(color: const Color(0xFFB33A53), fontWeight: FontWeight.w600)),
@@ -342,18 +377,48 @@ class _MazeGamePageState extends State<MazeGamePage>
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.onBack, required this.onRestart});
+  const _Header({
+    required this.onBack,
+    required this.onRestart,
+    required this.onSettings,
+  });
+
   final VoidCallback onBack;
   final VoidCallback onRestart;
+  final VoidCallback onSettings;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _RoundActionButton(icon: Icons.arrow_back_rounded, tooltip: '返回', onPressed: onBack),
+        _RoundActionButton(
+          icon: Icons.arrow_back_rounded,
+          tooltip: '返回',
+          onPressed: onBack,
+        ),
         const SizedBox(width: 18),
-        const Expanded(child: Text('重力迷宫', style: TextStyle(color: Color(0xFF17151D), fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: 1.3))),
-        _RoundActionButton(icon: Icons.refresh_rounded, tooltip: '换一张迷宫', onPressed: onRestart),
+        const Expanded(
+          child: Text(
+            '重力迷宫',
+            style: TextStyle(
+              color: Color(0xFF17151D),
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.3,
+            ),
+          ),
+        ),
+        _RoundActionButton(
+          icon: Icons.refresh_rounded,
+          tooltip: '换一张迷宫',
+          onPressed: onRestart,
+        ),
+        const SizedBox(width: 10),
+        _RoundActionButton(
+          icon: Icons.settings_rounded,
+          tooltip: '设置',
+          onPressed: onSettings,
+        ),
       ],
     );
   }
@@ -480,45 +545,182 @@ class _PauseButton extends StatelessWidget {
   }
 }
 
-class _SettingsCard extends StatelessWidget {
-  const _SettingsCard({required this.speedLevel, required this.manualControl, required this.speedLabel, required this.onSpeedChanged, required this.onControlModeChanged});
+class _SettingsDialog extends StatelessWidget {
+  const _SettingsDialog({
+    required this.initial,
+    required this.speedLevel,
+    required this.manualControl,
+    required this.onApply,
+  });
+
+  final bool initial;
   final _SpeedLevel speedLevel;
   final bool manualControl;
-  final String speedLabel;
-  final ValueChanged<_SpeedLevel> onSpeedChanged;
-  final ValueChanged<bool> onControlModeChanged;
+  final void Function(_SpeedLevel, bool) onApply;
 
   @override
   Widget build(BuildContext context) {
-    return _GlassCard(
-      padding: const EdgeInsets.fromLTRB(24, 22, 18, 16),
-      fillColor: const Color(0xD9D7D7DF),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text('移动 / 控制设置', style: TextStyle(color: Color(0xFF272330), fontSize: 22, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 16),
-          _SpeedSelector(selected: speedLevel, onChanged: onSpeedChanged),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Icon(manualControl ? Icons.touch_app_rounded : Icons.screen_rotation_alt_rounded, color: const Color(0xFF5F5A67), size: 40),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('手动控制', style: TextStyle(color: Color(0xFF292530), fontSize: 20, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 2),
-                    Text(manualControl ? '触控屏幕控制小球' : '倾斜手机来控制小球', style: const TextStyle(color: Color(0xFF696473), fontSize: 15, fontWeight: FontWeight.w600)),
-                  ],
-                ),
+    _SpeedLevel selectedSpeed = speedLevel;
+    bool selectedManual = manualControl;
+
+    return PopScope(
+      canPop: !initial,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+        child: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return _GlassCard(
+              padding: const EdgeInsets.fromLTRB(22, 24, 18, 18),
+              fillColor: const Color(0xF2E9E8EE),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.tune_rounded,
+                        color: Color(0xFF514485),
+                        size: 28,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          initial ? '开始前设置' : '移动 / 控制设置',
+                          style: const TextStyle(
+                            color: Color(0xFF272330),
+                            fontSize: 23,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      if (!initial)
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          tooltip: '关闭',
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    initial
+                        ? '选择移动速度和控制方式，点击开始进入迷宫'
+                        : '调整后点击应用，设置会立即生效',
+                    style: const TextStyle(
+                      color: Color(0xFF696473),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    '移动速度',
+                    style: TextStyle(
+                      color: Color(0xFF40394F),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _SpeedSelector(
+                    selected: selectedSpeed,
+                    onChanged: (value) => setDialogState(() {
+                      selectedSpeed = value;
+                    }),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.46),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          selectedManual
+                              ? Icons.touch_app_rounded
+                              : Icons.screen_rotation_alt_rounded,
+                          color: const Color(0xFF5F5A67),
+                          size: 36,
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '手动控制',
+                                style: TextStyle(
+                                  color: Color(0xFF292530),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                '关闭时使用重力感应，开启后触控拖动控制',
+                                style: TextStyle(
+                                  color: Color(0xFF696473),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: selectedManual,
+                          onChanged: (value) => setDialogState(() {
+                            selectedManual = value;
+                          }),
+                          activeThumbColor: Colors.white,
+                          activeTrackColor: const Color(0xFF575171),
+                          inactiveThumbColor: const Color(0xFFF8F8FC),
+                          inactiveTrackColor: const Color(0xFF9999A1),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (!initial)
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('取消'),
+                        ),
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        onPressed: () => onApply(selectedSpeed, selectedManual),
+                        icon: Icon(
+                          initial
+                              ? Icons.play_arrow_rounded
+                              : Icons.check_rounded,
+                        ),
+                        label: Text(initial ? '开始游戏' : '应用设置'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF514485),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              Switch(value: manualControl, onChanged: onControlModeChanged, activeThumbColor: Colors.white, activeTrackColor: const Color(0xFF575171), inactiveThumbColor: const Color(0xFFF8F8FC), inactiveTrackColor: const Color(0xFF9999A1)),
-            ],
-          ),
-          Align(alignment: Alignment.centerRight, child: Text('当前速度：$speedLabel', style: const TextStyle(color: Color(0xFF625B78), fontSize: 12, fontWeight: FontWeight.w700))),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
