@@ -835,16 +835,15 @@ class _MazePainter extends CustomPainter {
     _drawGlow(canvas, exitRect.center, const Color(0xFFE16FEA));
 
     final double stroke = math.max(6, math.min(cellWidth, cellHeight) * 0.11);
-    final Paint wallShadow = Paint()..color = const Color(0x392D2730)..strokeWidth = stroke * 1.3..strokeCap = StrokeCap.square..style = PaintingStyle.stroke;
-    final Paint wall = Paint()..shader = ui.Gradient.linear(const Offset(0, 0), Offset(size.width, size.height), const <Color>[Color(0xFFFFFFFF), Color(0xFFC9C5C4)])..strokeWidth = stroke..strokeCap = StrokeCap.square..style = PaintingStyle.stroke;
+    final Paint wall = Paint()..color = const Color(0xFFF9F7FF)..strokeWidth = stroke..strokeCap = StrokeCap.square..style = PaintingStyle.stroke;
     for (int row = 0; row < maze.rows; row++) {
       for (int column = 0; column < maze.columns; column++) {
         final double left = origin.dx + column * cellWidth;
         final double top = origin.dy + row * cellHeight;
-        if (maze.hasWall(column, row, MazeDirection.top)) _drawWall(canvas, Offset(left, top), Offset(left + cellWidth, top), wallShadow, wall);
-        if (maze.hasWall(column, row, MazeDirection.left)) _drawWall(canvas, Offset(left, top), Offset(left, top + cellHeight), wallShadow, wall);
-        if (maze.hasWall(column, row, MazeDirection.right)) _drawWall(canvas, Offset(left + cellWidth, top), Offset(left + cellWidth, top + cellHeight), wallShadow, wall);
-        if (maze.hasWall(column, row, MazeDirection.bottom)) _drawWall(canvas, Offset(left, top + cellHeight), Offset(left + cellWidth, top + cellHeight), wallShadow, wall);
+        if (maze.hasWall(column, row, MazeDirection.top)) _drawWall(canvas, Offset(left, top), Offset(left + cellWidth, top), wall);
+        if (maze.hasWall(column, row, MazeDirection.left)) _drawWall(canvas, Offset(left, top), Offset(left, top + cellHeight), wall);
+        if (maze.hasWall(column, row, MazeDirection.right)) _drawWall(canvas, Offset(left + cellWidth, top), Offset(left + cellWidth, top + cellHeight), wall);
+        if (maze.hasWall(column, row, MazeDirection.bottom)) _drawWall(canvas, Offset(left, top + cellHeight), Offset(left + cellWidth, top + cellHeight), wall);
       }
     }
     _drawMarker(canvas, startRect.center, '入', const Color(0xFF3559A8));
@@ -861,8 +860,7 @@ class _MazePainter extends CustomPainter {
     _drawBall(canvas, ballCenter, math.min(cellWidth, cellHeight) * 0.18);
   }
 
-  void _drawWall(Canvas canvas, Offset start, Offset end, Paint shadow, Paint wall) {
-    canvas.drawLine(start + const Offset(3, 5), end + const Offset(3, 5), shadow);
+  void _drawWall(Canvas canvas, Offset start, Offset end, Paint wall) {
     canvas.drawLine(start, end, wall);
   }
 
