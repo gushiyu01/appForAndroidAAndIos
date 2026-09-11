@@ -37,8 +37,14 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
+      - name: Preserve dependency lockfile
+        run: mv pubspec.lock pubspec.lock.ci
+
       - name: Create Flutter platforms
         run: flutter create . --no-pub --platforms android,ios --project-name app_for_android_a_and_ios --org com.gushiyu01
+
+      - name: Restore dependency lockfile
+        run: mv pubspec.lock.ci pubspec.lock
 
       - name: Prepare native platform settings
         run: python tool/prepare_platforms.py
@@ -98,8 +104,14 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
+      - name: Preserve dependency lockfile
+        run: mv pubspec.lock pubspec.lock.ci
+
       - name: Create Flutter platforms
         run: flutter create . --no-pub --platforms android,ios --project-name app_for_android_a_and_ios --org com.gushiyu01
+
+      - name: Restore dependency lockfile
+        run: mv pubspec.lock.ci pubspec.lock
 
       - name: Prepare native platform settings
         run: python3 tool/prepare_platforms.py
