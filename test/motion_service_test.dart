@@ -16,8 +16,26 @@ void main() {
   });
 
   test('rejects invalid native motion events', () {
+    expect(() => MotionSample.fromEvent(<String>[]), throwsFormatException);
+  });
+  test('rejects missing, nonnumeric and nonfinite axes', () {
+    for (final Object? value in <Object?>[
+      null,
+      '1',
+      double.nan,
+      double.infinity,
+    ]) {
+      expect(
+        () => MotionSample.fromEvent(<String, Object?>{
+          'x': value,
+          'y': 0,
+          'z': -9.80665,
+        }),
+        throwsFormatException,
+      );
+    }
     expect(
-      () => MotionSample.fromEvent(<String>[]),
+      () => MotionSample.fromEvent(<String, Object?>{'x': 0, 'y': 0}),
       throwsFormatException,
     );
   });

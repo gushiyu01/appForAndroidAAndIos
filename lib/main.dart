@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'pages/camera_page.dart';
@@ -5,8 +7,11 @@ import 'pages/home_page.dart';
 import 'pages/level_test_page.dart';
 import 'pages/login_page.dart';
 import 'pages/maze_game_page.dart';
+import 'services/camera_service.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  unawaited(CameraService.instance.recover());
   runApp(const AppForAndroidAAndIosApp());
 }
 

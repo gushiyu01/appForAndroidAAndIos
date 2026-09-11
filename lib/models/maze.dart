@@ -17,17 +17,10 @@ enum MazeDirection {
 }
 
 class Maze {
-  Maze._({
-    required this.columns,
-    required this.rows,
-    required List<int> walls,
-  }) : _walls = walls;
+  Maze._({required this.columns, required this.rows, required List<int> walls})
+    : _walls = walls;
 
-  factory Maze.generate({
-    int columns = 9,
-    int rows = 13,
-    Random? random,
-  }) {
+  factory Maze.generate({int columns = 9, int rows = 13, Random? random}) {
     if (columns < 2 || rows < 2) {
       throw ArgumentError('A maze needs at least 2 columns and 2 rows.');
     }
@@ -40,10 +33,8 @@ class Maze {
 
     while (stack.isNotEmpty) {
       final Point<int> current = stack.last;
-      final List<(Point<int>, MazeDirection)> available = <(
-        Point<int>,
-        MazeDirection
-      )>[];
+      final List<(Point<int>, MazeDirection)> available =
+          <(Point<int>, MazeDirection)>[];
 
       for (final MazeDirection direction in MazeDirection.values) {
         final Point<int> next = Point<int>(

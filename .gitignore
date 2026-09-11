@@ -7,7 +7,6 @@
 .pub/
 build/
 coverage/
-pubspec.lock
 
 # IDE
 .idea/

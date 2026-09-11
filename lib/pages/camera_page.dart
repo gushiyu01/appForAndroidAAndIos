@@ -1,10 +1,15 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../services/camera_service.dart';
+
 class CameraPage extends StatefulWidget {
-  const CameraPage({super.key});
+  const CameraPage({super.key, this.cameraService});
+
+  final CameraService? cameraService;
 
   static const String routeName = '/camera';
 
@@ -13,54 +18,34 @@ class CameraPage extends StatefulWidget {
 }
 
 class _CameraPageState extends State<CameraPage> {
-  final ImagePicker _picker = ImagePicker();
-  XFile? _photo;
-  bool _isLaunching = false;
-  String? _errorMessage;
+  late final CameraService _camera =
+      widget.cameraService ?? CameraService.instance;
+  bool _isLaunching = true;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_restorePhoto());
+  }
+
+  Future<void> _restorePhoto() async {
+    await _camera.recover();
+    if (!mounted) return;
+    _camera.hasPendingRecovery = false;
+    setState(() => _isLaunching = false);
+  }
 
   Future<void> _openCamera() async {
-    if (_isLaunching) {
-      return;
-    }
-
-    setState(() {
-      _isLaunching = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final XFile? photo = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 90,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _photo = photo;
-      });
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _errorMessage = '相机打开失败';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLaunching = false;
-        });
-      }
-    }
+    if (_isLaunching) return;
+    setState(() => _isLaunching = true);
+    await _camera.capture();
+    if (mounted) setState(() => _isLaunching = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final XFile? photo = _photo;
+    final XFile? photo = _camera.photo;
 
     return Scaffold(
       appBar: AppBar(title: const Text('相机')),
@@ -93,9 +78,9 @@ class _CameraPageState extends State<CameraPage> {
                         ),
                 ),
               ),
-              if (_errorMessage != null)
+              if (_camera.errorMessage != null)
                 Text(
-                  _errorMessage!,
+                  _camera.errorMessage!,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: colorScheme.error),
                 ),

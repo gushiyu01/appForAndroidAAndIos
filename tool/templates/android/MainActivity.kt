@@ -33,7 +33,14 @@ class MainActivity : FlutterFragmentActivity() {
 
             override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
                 val manager = sensorManager
-                val sensor = manager?.getDefaultSensor(sensorType)
+                // Android gravity/accelerometer use specific-force signs. Negate
+                // their gravity component to match Core Motion's physical gravity.
+                val sensor = if (sensorType == Sensor.TYPE_ACCELEROMETER) {
+                    manager?.getDefaultSensor(Sensor.TYPE_GRAVITY)
+                        ?: manager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+                } else {
+                    manager?.getDefaultSensor(sensorType)
+                }
                 if (manager == null || sensor == null) {
                     events?.error(
                         "SENSOR_UNAVAILABLE",
@@ -43,14 +50,27 @@ class MainActivity : FlutterFragmentActivity() {
                     return
                 }
 
+                val gravity = DoubleArray(3)
+                var lastTimestamp: Long? = null
                 val newListener = object : SensorEventListener {
                     override fun onSensorChanged(event: SensorEvent) {
+                        val values = DoubleArray(3) { event.values[it].toDouble() }
+                        if (sensorType == Sensor.TYPE_ACCELEROMETER) {
+                            if (sensor.type == Sensor.TYPE_ACCELEROMETER) {
+                                val previous = lastTimestamp
+                                val dt = if (previous == null) 0.0 else
+                                    (event.timestamp - previous) / 1_000_000_000.0
+                                val alpha = if (previous == null) 0.0 else 0.25 / (0.25 + dt)
+                                for (axis in 0..2) {
+                                    gravity[axis] = alpha * gravity[axis] + (1 - alpha) * values[axis]
+                                    values[axis] = gravity[axis]
+                                }
+                                lastTimestamp = event.timestamp
+                            }
+                            for (axis in 0..2) values[axis] = -values[axis]
+                        }
                         events?.success(
-                            mapOf(
-                                "x" to event.values[0].toDouble(),
-                                "y" to event.values[1].toDouble(),
-                                "z" to event.values[2].toDouble(),
-                            ),
+                            mapOf("x" to values[0], "y" to values[1], "z" to values[2]),
                         )
                     }
 
@@ -58,11 +78,15 @@ class MainActivity : FlutterFragmentActivity() {
                 }
 
                 listener = newListener
-                manager.registerListener(
+                val registered = manager.registerListener(
                     newListener,
                     sensor,
                     SensorManager.SENSOR_DELAY_UI,
                 )
+                if (!registered) {
+                    listener = null
+                    events?.error("SENSOR_UNAVAILABLE", "Cannot start sensor updates", null)
+                }
             }
 
             override fun onCancel(arguments: Any?) {

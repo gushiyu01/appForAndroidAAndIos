@@ -5,7 +5,9 @@ import 'package:app_for_android_a_and_ios/pages/home_page.dart';
 import 'package:app_for_android_a_and_ios/pages/login_page.dart';
 
 void main() {
-  testWidgets('login page exposes biometric retry', (WidgetTester tester) async {
+  testWidgets('login page exposes biometric retry', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(home: LoginPage(autoStart: false)),
     );

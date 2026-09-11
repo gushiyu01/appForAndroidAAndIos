@@ -1,13 +1,48 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../services/camera_service.dart';
 import 'camera_page.dart';
 import 'level_test_page.dart';
 import 'maze_game_page.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key, this.cameraService});
+
+  final CameraService? cameraService;
 
   static const String routeName = '/home';
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_showRecoveredPhoto());
+    });
+  }
+
+  Future<void> _showRecoveredPhoto() async {
+    final CameraService service =
+        widget.cameraService ?? CameraService.instance;
+    await service.recover();
+    if (!mounted ||
+        !service.hasPendingRecovery ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    service.hasPendingRecovery = false;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => CameraPage(cameraService: service),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

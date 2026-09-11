@@ -1,5 +1,7 @@
 from pathlib import Path
 import plistlib
+import re
+import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -16,21 +18,26 @@ def add_android_permissions() -> None:
         / "AndroidManifest.xml"
     )
     manifest = manifest_path.read_text(encoding="utf-8")
+    namespace = "{http://schemas.android.com/apk/res/android}"
+    document = ET.fromstring(manifest)
+    existing = {
+        item.get(namespace + "name")
+        for item in document.findall("uses-permission")
+    }
     permissions = [
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT",
     ]
     additions = "".join(
         f'    <uses-permission android:name="{permission}" />\n'
-        for permission in permissions
-        if permission not in manifest
+        for permission in permissions if permission not in existing
     )
     if additions:
-        manifest = manifest.replace(
-            "    <application",
-            additions + "    <application",
-            1,
-        )
+        manifest, count = re.subn(r"(?m)^[ \t]*<application\b",
+                                  additions + "    <application", manifest, count=1)
+        if count != 1:
+            raise ValueError("Generated manifest has no application element")
+        ET.fromstring(manifest)
         manifest_path.write_text(manifest, encoding="utf-8")
 
 
@@ -43,18 +50,12 @@ def ensure_legacy_kotlin_settings() -> None:
         "android.builtInKotlin": "false",
         "android.newDsl": "false",
     }
-    updates = []
+    lines = properties.splitlines()
     for name, value in required_properties.items():
-        prefix = f"{name}="
-        if any(line.startswith(prefix) for line in properties.splitlines()):
-            continue
-        updates.append(f"{prefix}{value}")
-
-    if updates:
-        if properties and not properties.endswith("\n"):
-            properties += "\n"
-        properties += "\n".join(updates) + "\n"
-        properties_path.write_text(properties, encoding="utf-8")
+        pattern = re.compile(r"^\s*" + re.escape(name) + r"\s*[=:]")
+        lines = [line for line in lines if not pattern.match(line)]
+        lines.append(f"{name}={value}")
+    properties_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def write_motion_channels() -> None:
@@ -93,6 +94,7 @@ def add_ios_usage_descriptions() -> None:
 
     info_plist["NSCameraUsageDescription"] = "需要访问相机以拍摄照片。"
     info_plist["NSFaceIDUsageDescription"] = "需要使用系统生物识别解锁应用。"
+    info_plist["NSMotionUsageDescription"] = "需要读取运动传感器以进行水平测试和重力迷宫游戏。"
 
     with info_plist_path.open("wb") as file:
         plistlib.dump(info_plist, file, fmt=plistlib.FMT_XML)

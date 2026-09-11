@@ -3,24 +3,10 @@ import Flutter
 import CoreMotion
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
-    override func application(
-        _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-    ) -> Bool {
-        guard let controller = window?.rootViewController as? FlutterViewController else {
-            return super.application(
-                application,
-                didFinishLaunchingWithOptions: launchOptions,
-            )
-        }
-
-        GeneratedPluginRegistrant.register(with: self)
-        registerMotionChannels(with: controller.binaryMessenger)
-        return super.application(
-            application,
-            didFinishLaunchingWithOptions: launchOptions,
-        )
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+    func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+        GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+        registerMotionChannels(with: engineBridge.applicationRegistrar.messenger())
     }
 
     private func registerMotionChannels(with messenger: FlutterBinaryMessenger) {
@@ -66,9 +52,26 @@ private final class MotionStreamHandler: NSObject, FlutterStreamHandler {
         withArguments arguments: Any?,
         eventSink events: @escaping FlutterEventSink
     ) -> FlutterError? {
+        guard motionManager.isDeviceMotionAvailable else {
+            return FlutterError(
+                code: "SENSOR_UNAVAILABLE",
+                message: "Device motion is unavailable",
+                details: nil
+            )
+        }
         motionManager.deviceMotionUpdateInterval = 1.0 / 30.0
-        motionManager.startDeviceMotionUpdates(to: .main) { motion, error in
-            guard error == nil, let motion else { return }
+        motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
+            guard let self else { return }
+            if let error {
+                events(FlutterError(
+                    code: "SENSOR_ERROR",
+                    message: error.localizedDescription,
+                    details: nil
+                ))
+                self.motionManager.stopDeviceMotionUpdates()
+                return
+            }
+            guard let motion else { return }
             events(self.values(motion))
         }
 

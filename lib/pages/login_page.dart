@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -24,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     if (widget.autoStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _authenticate();
+        if (mounted) unawaited(_authenticate());
       });
     }
   }
@@ -112,16 +114,16 @@ class _LoginPageState extends State<LoginPage> {
               Text(
                 '指纹登录',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 12),
               Text(
                 _statusMessage,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 36),
               if (!_isAuthenticating)
